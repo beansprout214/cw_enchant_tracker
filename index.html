@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Minecraft Enchantments Tracker</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #111827;
+            color: #e5e7eb;
+            margin: 0;
+            padding: 0;
+        }
+
+        .app {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        h1 {
+            margin-bottom: 0.25rem;
+        }
+
+        .subtitle {
+            color: #9ca3af;
+            margin-bottom: 1rem;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            align-items: center;
+        }
+
+        .controls input[type="text"] {
+            padding: 0.4rem 0.6rem;
+            border-radius: 0.375rem;
+            border: 1px solid #4b5563;
+            background: #020617;
+            color: #e5e7eb;
+        }
+
+        .controls label {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 0.9rem;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.1rem 0.4rem;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            background: #1f2937;
+            color: #d1d5db;
+            margin-left: 0.25rem;
+        }
+
+        .enchantments-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .card {
+            background: #020617;
+            border-radius: 0.5rem;
+            border: 1px solid #1f2937;
+            padding: 0.6rem 0.75rem 0.7rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            transition: background 0.25s ease, border-color 0.25s ease;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .card-desc {
+            font-size: 0.8rem;
+            color: #9ca3af;
+        }
+
+        .card-slots {
+            font-size: 0.75rem;
+            color: #6b7280;
+        }
+
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 0.25rem;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 0.8rem;
+        }
+
+        .checkbox-label input {
+            width: 14px;
+            height: 14px;
+        }
+
+        .pill {
+            padding: 0.25rem;
+            border-radius: 999px;
+            border: 1px solid #374151;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .section-title {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #6b7280;
+            margin: 0.75rem 0 0.35rem;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #1f2937;
+            margin: 0.75rem 0 0.5rem;
+        }
+
+        .card-fs {
+            background: #0a3d22;
+            border-color: #1faa5a;
+        }
+
+        .card-nfs {
+            border-color: #3d3d3d;
+            background: #0e131d;
+        }
+
+        @media (max-width: 600px) {
+            .controls {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const ENCHANTMENTS = [
+            { name: "Aqua Affinity", maxLevel: "I", description: "Increases mining speed underwater", slots: ["Helmet"] },
+            { name: "Bane of Arthropods", maxLevel: "V", description: "Increases damage against arthropods", slots: ["Sword", "Axe"] },
+            { name: "Blast Protection", maxLevel: "IV", description: "Reduces explosion damage", slots: ["Helmet", "Chestplate", "Leggings", "Boots"] },
+            { name: "Channeling", maxLevel: "I", description: "Summons lightning during thunderstorms", slots: ["Trident"] },
+            { name: "Curse of Binding", maxLevel: "I", description: "Prevents armor removal", slots: ["Helmet", "Chestplate", "Leggings", "Boots", "Elytra"] },
+            { name: "Curse of Vanishing", maxLevel: "I", description: "Item disappears on death", slots: ["All Equipment"] },
+            { name: "Depth Strider", maxLevel: "III", description: "Faster underwater movement", slots: ["Boots"] },
+            { name: "Efficiency", maxLevel: "V", description: "Increases mining speed", slots: ["Pickaxe", "Shovel", "Axe", "Hoe"] },
+            { name: "Feather Falling", maxLevel: "IV", description: "Reduces fall damage", slots: ["Boots"] },
+            { name: "Fire Aspect", maxLevel: "II", description: "Sets enemies on fire", slots: ["Sword"] },
+            { name: "Fire Protection", maxLevel: "IV", description: "Reduces fire damage", slots: ["Helmet", "Chestplate", "Leggings", "Boots"] },
+            { name: "Flame", maxLevel: "I", description: "Arrows ignite targets", slots: ["Bow"] },
+            { name: "Fortune", maxLevel: "III", description: "Increases block drops", slots: ["Pickaxe", "Shovel", "Axe", "Hoe"] },
+            { name: "Frost Walker", maxLevel: "II", description: "Creates ice while walking", slots: ["Boots"] },
+            { name: "Impaling", maxLevel: "V", description: "More Trident damage underwater", slots: ["Trident"] },
+            { name: "Infinity", maxLevel: "I", description: "Arrows not consumed", slots: ["Bow"] },
+            { name: "Knockback", maxLevel: "II", description: "Increases knockback", slots: ["Sword"] },
+            { name: "Looting", maxLevel: "III", description: "More mob drops", slots: ["Sword"] },
+            { name: "Loyalty", maxLevel: "III", description: "Trident returns", slots: ["Trident"] },
+            { name: "Luck of the Sea", maxLevel: "III", description: "Better fishing loot", slots: ["Fishing Rod"] },
+            { name: "Lure", maxLevel: "III", description: "Faster fish bites", slots: ["Fishing Rod"] },
+            { name: "Mending", maxLevel: "I", description: "Repairs with XP", slots: ["All Equipment"] },
+            { name: "Multishot", maxLevel: "I", description: "Shoots 3 arrows", slots: ["Crossbow"] },
+            { name: "Piercing", maxLevel: "IV", description: "Arrows pierce mobs", slots: ["Crossbow"] },
+            { name: "Power", maxLevel: "V", description: "More bow damage", slots: ["Bow"] },
+            { name: "Projectile Protection", maxLevel: "IV", description: "Reduces projectile damage", slots: ["Helmet", "Chestplate", "Leggings", "Boots"] },
+            { name: "Protection", maxLevel: "IV", description: "General damage reduction", slots: ["Helmet", "Chestplate", "Leggings", "Boots"] },
+            { name: "Punch", maxLevel: "II", description: "Bow knockback", slots: ["Bow"] },
+            { name: "Quick Charge", maxLevel: "III", description: "Faster reload", slots: ["Crossbow"] },
+            { name: "Respiration", maxLevel: "III", description: "Longer underwater breathing", slots: ["Helmet"] },
+            { name: "Riptide", maxLevel: "III", description: "Propels player in water/rain", slots: ["Trident"] },
+            { name: "Sharpness", maxLevel: "V", description: "More melee damage", slots: ["Sword", "Axe"] },
+            { name: "Silk Touch", maxLevel: "I", description: "Drops exact block", slots: ["Pickaxe", "Shovel", "Axe", "Hoe"] },
+            { name: "Smite", maxLevel: "V", description: "More undead damage", slots: ["Sword", "Axe"] },
+            { name: "Soul Speed", maxLevel: "III", description: "Faster on soul blocks", slots: ["Boots"] },
+            { name: "Sweeping Edge", maxLevel: "III", description: "More sweep damage", slots: ["Sword"] },
+            { name: "Swift Sneak", maxLevel: "III", description: "Faster crouching", slots: ["Leggings"] },
+            { name: "Thorns", maxLevel: "III", description: "Damages attackers", slots: ["Helmet", "Chestplate", "Leggings", "Boots"] },
+            { name: "Unbreaking", maxLevel: "III", description: "Increases durability", slots: ["All Equipment"] },
+            {
+                name: "Density",
+                maxLevel: "V",
+                description: "Increases the damage of a mace's smash attack",
+                slots: ["Mace"]
+            },
+            {
+                name: "Breach",
+                maxLevel: "IV",
+                description: "Reduces the effectiveness of armor on the target, including innate armor points",
+                slots: ["Mace"]
+            },
+            {
+                name: "Wind Burst",
+                maxLevel: "III",
+                description: "Causes a burst of wind upon executing a mace smash attack that launches the attacker upward",
+                slots: ["Mace"]
+            },
+            {
+                name: "Backstabbing",
+                maxLevel: "III",
+                description: "Multiplies the damage dealt when striking targets from behind",
+                slots: ["Knife"]
+            },
+        ];
+
+        const STORAGE_KEY = "villager_enchantments_for_sale_v1";
+        const HIDDEN_KEY = "villager_enchantments_hidden_v1";
+
+        function App() {
+            const [checked, setChecked] = React.useState(() => {
+                try {
+                    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+                } catch {
+                    return {};
+                }
+            });
+
+            const [hidden, setHidden] = React.useState(() => {
+                try {
+                    return JSON.parse(localStorage.getItem(HIDDEN_KEY)) || {};
+                } catch {
+                    return {};
+                }
+            });
+
+            const [search, setSearch] = React.useState("");
+            const [showOnlyChecked, setShowOnlyChecked] = React.useState(false);
+            const [showHidden, setShowHidden] = React.useState(false);
+
+            React.useEffect(() => {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(checked));
+            }, [checked]);
+
+            React.useEffect(() => {
+                localStorage.setItem(HIDDEN_KEY, JSON.stringify(hidden));
+            }, [hidden]);
+
+            const toggle = (name) => {
+                setChecked((prev) => ({ ...prev, [name]: !prev[name] }));
+            };
+
+            const toggleHidden = (name) => {
+                setHidden((prev) => ({ ...prev, [name]: !prev[name] }));
+            };
+
+            const clearAll = () => setChecked({});
+
+            const filtered = ENCHANTMENTS.filter((e) => {
+                if (!showHidden && hidden[e.name]) return false;
+
+                const matchesSearch =
+                    e.name.toLowerCase().includes(search.toLowerCase()) ||
+                    e.slots.join(" ").toLowerCase().includes(search.toLowerCase());
+
+                const matchesChecked = !showOnlyChecked || checked[e.name];
+
+                return matchesSearch && matchesChecked;
+            });
+
+            const totalChecked = Object.values(checked).filter(Boolean).length;
+
+            return (
+                <div className="app">
+                    <h1>Villager Enchantments Tracker</h1>
+                    <div className="subtitle">Minecraft 1.21.11 • Track your trading hall inventory</div>
+
+                    <div className="controls">
+                        <label>
+                            <span>Search:</span>
+                            <input
+                                type="text"
+                                placeholder="Name or slot"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                            />
+                        </label>
+
+                        <label>
+                            <input
+                                type="checkbox"
+                                checked={showOnlyChecked}
+                                onChange={(e) => setShowOnlyChecked(e.target.checked)}
+                            />
+                            <span>Show Only For Sale</span>
+                        </label>
+
+                        <label>
+                            <input
+                                type="checkbox"
+                                checked={showHidden}
+                                onChange={(e) => setShowHidden(e.target.checked)}
+                            />
+                            <span>Show Hidden</span>
+                        </label>
+
+                        <button
+                            onClick={clearAll}
+                            style={{
+                                padding: "0.35rem 0.7rem",
+                                borderRadius: "0.375rem",
+                                border: "1px solid #4b5563",
+                                background: "#111827",
+                                color: "#e5e7eb",
+                                cursor: "pointer",
+                                fontSize: "0.8rem",
+                            }}
+                        >
+                            Clear all checks
+                        </button>
+
+                        <button
+                            onClick={() => setHidden({})}
+                            style={{
+                                padding: "0.35rem 0.7rem",
+                                borderRadius: "0.375rem",
+                                border: "1px solid #4b5563",
+                                background: "#111827",
+                                color: "#e5e7eb",
+                                cursor: "pointer",
+                                fontSize: "0.8rem",
+                            }}
+                        >
+                            Unhide all
+                        </button>
+
+
+                        <span style={{ fontSize: "0.85rem", color: "#9ca3af" }}>
+                            {totalChecked}/{ENCHANTMENTS.length} for sale
+                        </span>
+                    </div>
+
+                    <hr />
+
+                    <div className="enchantments-grid">
+                        {filtered.map((e) => {
+                            const isChecked = !!checked[e.name];
+                            const isHidden = !!hidden[e.name];
+
+                            return (
+                                <div
+                                    key={e.name}
+                                    className={`card ${isChecked ? "card-fs" : "card-nfs"}`}
+                                    onClick={() => toggle(e.name)}
+                                    style={{ cursor: "pointer" }}
+                                >
+
+
+                                    <div className="card-header">
+                                        <div>
+                                            <div className="card-title">
+                                                {e.name}
+                                                <span className="badge">Max {e.maxLevel}</span>
+                                            </div>
+                                            <div className="card-desc">{e.description}</div>
+                                        </div>
+                                    </div>
+
+                                    <div className="card-slots">
+                                        <strong>Slots:</strong> {e.slots.join(", ")}
+                                    </div>
+
+                                    <div className="card-footer">
+
+                                        <button
+                                            onClick={(ev) => {
+                                                ev.stopPropagation();
+                                                toggleHidden(e.name);
+                                            }}
+                                            style={{
+                                                padding: "0.2rem 0.5rem",
+                                                fontSize: "0.7rem",
+                                                borderRadius: "0.375rem",
+                                                border: "1px solid #4b5563",
+                                                background: isHidden ? "#7f1d1d" : "#1f2937",
+                                                color: "#e5e7eb",
+                                                cursor: "pointer",
+                                            }}
+                                        >
+                                            {isHidden ? "Unhide" : "Hide"}
+                                        </button>
+
+                                    </div>
+                                </div>
+                            );
+                        })}
+
+                        {filtered.length === 0 && (
+                            <div style={{ fontSize: "0.9rem", color: "#9ca3af" }}>
+                                No enchantments match your filters.
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById("root"));
+        root.render(<App />);
+    </script>
+</body>
+
+</html>
